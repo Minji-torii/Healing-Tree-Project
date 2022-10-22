@@ -7,9 +7,10 @@ Tree.KBMCtrl = class{
 		this.prevY = 0;
 		this._boundMouseMove = this.onMouseMove.bind(this);
 
+		//DOMRect요소의 크기와 브라우저 뷰포트에 상대적인 위치에 대한 정보를 제공
 		var box = this.canvas.getBoundingClientRect();
-		this.offsetX = box.left;
-		this.offsetY = box.top;
+		this.offsetX = box.left + 1000;
+		this.offsetY = box.top + 1000;
 		
 		this.canvas.addEventListener("mousedown",this.onMouseDown.bind(this));
 		this.canvas.addEventListener("mouseup",this.onMouseUp.bind(this));

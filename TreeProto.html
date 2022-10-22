@@ -51,10 +51,10 @@
 				gModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
 				//나무의 시작점 포인트 좌표
 				gModel.verts.data.push(
-					-1.0,0.0,-1.0,0.0,
-					-1.0,0.0,1.0,1.0,
-					1.0,0.0,1.0,2.0,
-					1.0,0.0,-1.0,3.0
+					-1.0,2.0,-1.0,0.0,
+					-1.0,2.0,1.0,1.0,
+					1.0,2.0,1.0,2.0,
+					1.0,2.0,-1.0,3.0
 				);
 				createTree(gModel);
 
@@ -63,21 +63,23 @@
 				TreeApp.scene.push(gModel);
 
 				//.....................................
-				//for doubling
-				fModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
+				//for cliff
+				var fModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
 				fModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
-				//나무의 시작점 포인트 좌표 => 동일하게 잡아야 함
 				fModel.verts.data.push(
-					-1.0,0.0,-1.0,0.0,
-					-1.0,0.0,1.0,1.0,
-					1.0,0.0,1.0,2.0,
-					1.0,0.0,-1.0,3.0
+					-4.0,0.0,-4.0,0.0,
+					-4.0,0.0,4.0,1.0,
+					4.0,0.0,4.0,2.0,
+					4.0,0.0,-4.0,3.0
 				);
-				createTree(fModel);
+				createCliff(fModel);
 
 
 				fModel.update();
 				TreeApp.scene.push(fModel);
+				//.......................................................
+				//Start Render Loop
+				TreeApp.renderLoop.start();
 				
 
 				//.......................................................
@@ -91,7 +93,45 @@
 				Tree.Render(TreeApp.scene);
 			}
 
+			function createCliff(gModel){
+				var vData = gModel.verts.data,	//ref to vert data
+					iData = gModel.index.data,	//ref to index data
+					steps = 4,					//How many times to extrude the trunks
+					mkHole = -1,				//When to leave holes in the trunk
+					idxList = null,				//Index Array List
+					idxListLast = [0,1,2,3],	//Previous Index Array List
+					branches = [];				//List of indexes of where the holes are.
+				
+				var rx=0,						//Random X
+					ry=0,						//Random Y
+					s = 0;						//Scale Value
 
+				//Create 
+				for(var i=0; i < steps; i++){
+					idxList = Kai.Extrude([0,0.7,0],idxListLast,vData);
+
+					s = 1 - Math.pow(0.1,(i+1)*1.9/steps);
+					//Kai.Scale(idxList,[s,1,s],vData);   			//Curve
+					//처음에 scale을 느리게 -> 빠르게 변화
+					Kai.Scale(idxList,[0.9,1.0,0.9],vData);		//Linear
+					//copy하고 줄이고, copy하고 줄이고하는 식으로 작동
+					
+					ry = 26 * Math.PI/180;
+					Kai.Rot(idxList,ry,"y",vData);
+
+					rx = 0 * Math.PI/180;
+					Kai.Rot(idxList,rx,"x",vData);
+					
+					
+					Kai.TriWall(idxListLast,idxList,iData,mkHole,branches);
+
+					idxListLast = idxList;
+				}
+
+				//Create Top Cap
+				Kai.TriQuad(idxListLast,iData);
+				
+			}
 
 			function createTree(gModel){
 				var vData = gModel.verts.data,	//ref to vert data
@@ -116,17 +156,17 @@
 					//Kai.Scale(idxList,[0.85,1.0,0.85],vData);		//Linear
 					//copy하고 줄이고, copy하고 줄이고하는 식으로 작동
 					
-					ry = Kai.Rnd(0,40) * Math.PI/180;
+					ry = 40 * Math.PI/180;
 					Kai.Rot(idxList,ry,"y",vData);
 
-					rx = Kai.Rnd(-10,10) * Math.PI/180;
+					rx = -10 * Math.PI/180;
 					Kai.Rot(idxList,rx,"x",vData);
 					
 					//이 Hole에서 가지가 시작됨
 					if(i == steps-1) mkHole = 1;
 					else if(i == steps-2) mkHole = 0;
-					else if(i == steps-3) mkHole = 0;
-					else if(i == steps-4) mkHole = 1;
+					else if(i == steps-3) mkHole = 1;
+					else if(i == steps-4) mkHole = 0;
 
 					Kai.TriWall(idxListLast,idxList,iData,mkHole,branches);
 
