@@ -161,16 +161,11 @@ var Kai = (function(){
 	//Triangle Faces ------------------------------
 	function TriQuad(iAry,out){ out.push(iAry[0],iAry[1],iAry[2],iAry[2],iAry[3],iAry[0]); }
 
-	//(전 quad, 현재 quad, index, 구멍을 만들 타임인지, )
-	//index 제작
 	function TriWall(iAryA,iAryB,out,mkHole,brOut){
 		var a,b,c,d,p;
 
 		//quad 찾기
 		for(var i=0; i < pathVertCnt; i++){
-			//traianglate two quad
-			//bottom이나 top은 만들지 않음
-			//index를 츨마다 4개씩 쌓아간다
 			p = (i+1)%pathVertCnt;
 			a = iAryB[i],
 			b = iAryA[i],
@@ -178,9 +173,7 @@ var Kai = (function(){
 			d = iAryB[p];
 			//console.log(a,b,c,c,d,a,"--",i,p);
 
-			//hole은 -1이거나 0이면 벽에 구멍을 뚫는다
 			if(mkHole == -1 || p%2 != mkHole) out.push(a,b,c,c,d,a); //a=a; // 
-			//hole을 만들 index를 brOut으로 뺀다
 			else brOut.push([a,b,c,d]);
 		}
 	}
@@ -227,7 +220,64 @@ var Kai = (function(){
 		out[2] = out[2] / mag * s;
 	}
 
+	//방향 - 실제로 위로 향하는 방향 계산
+	function qPlacement(vUp, out){
+		var zAxis	= new Fungi.Maths.Vec3(),	//Forward
+			//up		= new Vec3(vUp),
+			tmp		= new Fungi.Maths.Vec3(0,1,0);
+			yAxis	= new Fungi.Maths.Vec3(vUp),
+			xAxis	= new Fungi.Maths.Vec3();		//Right
+			//yAxis	= new Vec3();
+	
+	
+		yAxis.normalize(); //Normalize Top
+		Fungi.Maths.Vec3.cross(yAxis,tmp,zAxis); //Forward Direction
+		zAxis.normalize();
+		Fungi.Maths.Vec3.cross(yAxis,zAxis,xAxis); //Left Direction
+	
+		//fromAxis - Mat3 to Quaternion
+		var m00 = xAxis.x, m01 = xAxis.y, m02 = xAxis.z,
+			m10 = yAxis.x, m11 = yAxis.y, m12 = yAxis.z,
+			m20 = zAxis.x, m21 = zAxis.y, m22 = zAxis.z,
+			t = m00 + m11 + m22,
+			x, y, z, w, s;
+	
+		if(t > 0.0){
+			s = Math.sqrt(t + 1.0);
+			w = s * 0.5 ; // |w| >= 0.5
+			s = 0.5 / s;
+			x = (m12 - m21) * s;
+			y = (m20 - m02) * s;
+			z = (m01 - m10) * s;
+		}else if((m00 >= m11) && (m00 >= m22)){
+			s = Math.sqrt(1.0 + m00 - m11 - m22);
+			x = 0.5 * s;// |x| >= 0.5
+			s = 0.5 / s;
+			y = (m01 + m10) * s;
+			z = (m02 + m20) * s;
+			w = (m12 - m21) * s;
+		}else if(m11 > m22){
+			s = Math.sqrt(1.0 + m11 - m00 - m22);
+			y = 0.5 * s; // |y| >= 0.5
+			s = 0.5 / s;
+			x = (m10 + m01) * s;
+			z = (m21 + m12) * s;
+			w = (m20 - m02) * s;
+		}else{
+			s = Math.sqrt(1.0 + m22 - m00 - m11);
+			z = 0.5 * s; // |z| >= 0.5
+			s = 0.5 / s;
+			x = (m20 + m02) * s;
+			y = (m21 + m12) * s;
+			w = (m01 - m10) * s;
+		}
+		out[0] = x;
+		out[1] = y;
+		out[2] = z;
+		out[3] = w;
+	}
+
 	return {TriWall:TriWall, Extrude:Extrude, TriQuad:TriQuad, QuadCenterPos:QuadCenterPos, 
 		Norm:Norm, GetVert:GetVert, QuadCrossProd:QuadCrossProd, Scale:Scale, ScaleCenter:ScaleCenter, 
-		Rot:Rot, qRot:qRot, qRotCenter:qRotCenter, Rnd:Rnd };
+		Rot:Rot, qRot:qRot, qRotCenter:qRotCenter, Rnd:Rnd , qPlacement:qPlacement};
 })();

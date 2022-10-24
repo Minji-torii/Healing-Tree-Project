@@ -50,8 +50,11 @@ var Tree = (function(){
 			return buf;
 		};
 
-		//Textures <- 각 면마다 pixel을 채우는 느낌
-		gl.fLoadTexture = function(name,img,doYFlip,noMips){ var tex = Tree.Res.Textures[name] = this.createTexture();  return this.fUpdateTexture(name,img,doYFlip,noMips); };
+		//Textures
+		gl.fLoadTexture = function(name,img,doYFlip,noMips){ 
+			tex = Tree.Res.Textures[name] = this.createTexture();
+			return this.fUpdateTexture(name,img,doYFlip,noMips); };
+
 		gl.fUpdateTexture = function(name,img,doYFlip,noMips){
 			var tex = this.mTextureCache[name];	
 			if(doYFlip == true) this.pixelStorei(this.UNPACK_FLIP_Y_WEBGL, true);	//Flip the texture by the Y Position, So 0,0 is bottom left corner.
@@ -1539,8 +1542,9 @@ var Tree = (function(){
 		return shader;
 	}
 
+	
 	class Material{
-		static create(name,shaderName,opt){
+		static create(name,shaderName){
 			var m = new Material();
 			m.shader = Tree.Res.Shaders[shaderName];
 
@@ -1552,14 +1556,23 @@ var Tree = (function(){
 			this.shader = null;
 			this.uniforms = [];
 			
-			this.useCulling = true;
+			this.useCulling = true;			
 			this.useBlending = false;
-			this.useDepthTest = true;
+			this.useDepthTest = true;		
 			this.useModelMatrix = true;
 			this.useNormalMatrix = false;
 			this.useSampleAlphaCoverage = false;
 
 			this.drawMode = gl.TRIANGLES;
+		}
+
+		//각 모델마다 다른 색깔을 적용할 수 있게 uniform  metarial 형성
+		setUniforms(uName,uValue){ for(var i=0; i < arguments.length; i+=2) this.uniforms[arguments[i]] = arguments[i+1];  return this; }
+		applyUniforms(){
+			for(var n in this.uniforms){
+				this.shader.setUniforms(n,this.uniforms[n]);
+			}
+			return this;
 		}
 	}
 
@@ -1576,7 +1589,6 @@ var Tree = (function(){
 				this._TextureList = [];		//List of texture uniforms, Indexed {loc,tex}
 			}
 		}
-
 		//---------------------------------------------------
 		// Methods For Shader Prep.
 		//---------------------------------------------------
@@ -2264,6 +2276,8 @@ var Tree = (function(){
 				if(f.material.useBlending != BLENDING_STATE)	gl[ ( (BLENDING_STATE = (!BLENDING_STATE)) )?"enable":"disable" ](gl.BLEND);
 				if(f.material.useDepthTest != DEPTHTEST_STATE)	gl[ ( (DEPTHTEST_STATE = (!DEPTHTEST_STATE)) )?"enable":"disable" ](gl.DEPTH_TEST);
 				if(f.material.useSampleAlphaCoverage != SAMPLE_ALPHA_COV_STATE) gl[ ( (SAMPLE_ALPHA_COV_STATE = (!SAMPLE_ALPHA_COV_STATE)) )?"enable":"disable" ](gl.SAMPLE_ALPHA_TO_COVERAGE);
+			
+				f.material.applyUniforms();
 			}
 
 			//Prepare Buffers and Uniforms.

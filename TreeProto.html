@@ -21,7 +21,6 @@
 
 		<script>
 			var gModel;
-			var fModel;
 
 			window.addEventListener("load",function(){
 				TreeApp.startup();
@@ -33,23 +32,34 @@
 					.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4")
 					.prepareUniformBlocks(TreeApp.uboTransform,0);
 
-				mat = Tree.Shaders.Material.create("MatDomShader","DomShader");
-				mat.drawMode = Tree.gl.TRIANGLE_STRIP; //Tree.gl.POINTS; //Tree.gl.TRIANGLE_STRIP;
-				mat.useCulling = false;
+				Tree.Shaders.New("LowPolyShader","vertex_lowpoly","fragment_lowpoly")
+					.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4","uColorAry","vec3")
+					.prepareUniformBlocks(TreeApp.uboTransform,0)
+					.setUniforms("uColorAry",Tree.Util.rgbArray("ff0000"));
 
-				Tree.Shaders.New("LowPoly","vertex_lowpoly","fragment_lowpoly")
-					.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4")
+				Tree.Shaders.New("LowPolyShader1c","vertex_lowpoly1c","fragment_lowpoly1c")
+					.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4","uColor","vec3")
 					.prepareUniformBlocks(TreeApp.uboTransform,0);
-				mat = Tree.Shaders.Material.create("MatLowPoly","LowPoly");
-				mat.useCulling = true;
-				mat.drawMode = Tree.gl.TRIANGLE_STRIP; //Tree.gl.TRIANGLE_STRIP;
 
+				Tree.Shaders.Material.create("MatDomShader","DomShader");
+
+				var mat;
+				//나무 색깔
+				mat = Tree.Shaders.Material.create("MatLowPoly","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("3d210c"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//절벽 색깔
+				mat = Tree.Shaders.Material.create("matCliff","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("a04d20"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//bush 색깔
+				mat = Tree.Shaders.Material.create("matBush","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("eb98d5"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
 
 				//.......................................................
 				//Prepare our Renderables
 				gModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
 				gModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
-				//나무의 시작점 포인트 좌표
 				gModel.verts.data.push(
 					-1.0,2.0,-1.0,0.0,
 					-1.0,2.0,1.0,1.0,
@@ -61,27 +71,20 @@
 
 				gModel.update();
 				TreeApp.scene.push(gModel);
-
-				//.....................................
-				//for cliff
-				var fModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
-				fModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
-				fModel.verts.data.push(
+///////////////////////////////////////////
+				var gModel = new TreeExt.DynamicMesh(4,1,1,"matCliff"); // MatLowPoly MatDomShader
+				gModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
+				gModel.verts.data.push(
 					-4.0,0.0,-4.0,0.0,
 					-4.0,0.0,4.0,1.0,
 					4.0,0.0,4.0,2.0,
 					4.0,0.0,-4.0,3.0
 				);
-				createCliff(fModel);
+				createCliff(gModel);
 
 
-				fModel.update();
-				TreeApp.scene.push(fModel);
-				//.......................................................
-				//Start Render Loop
-				TreeApp.renderLoop.start();
-				
-
+				gModel.update();
+				TreeApp.scene.push(gModel);
 				//.......................................................
 				//Start Render Loop
 				TreeApp.renderLoop.start();
@@ -92,6 +95,7 @@
 				TreeApp.update();
 				Tree.Render(TreeApp.scene);
 			}
+
 
 			function createCliff(gModel){
 				var vData = gModel.verts.data,	//ref to vert data
@@ -136,7 +140,7 @@
 			function createTree(gModel){
 				var vData = gModel.verts.data,	//ref to vert data
 					iData = gModel.index.data,	//ref to index data
-					steps = 9,					//How many times to extrude the trunks
+					steps = 7,					//How many times to extrude the trunks
 					mkHole = -1,				//When to leave holes in the trunk
 					idxList = null,				//Index Array List
 					idxListLast = [0,1,2,3],	//Previous Index Array List
@@ -156,18 +160,15 @@
 					//Kai.Scale(idxList,[0.85,1.0,0.85],vData);		//Linear
 					//copy하고 줄이고, copy하고 줄이고하는 식으로 작동
 					
-					ry = 40 * Math.PI/180;
+					ry = Kai.Rnd(0,40) * Math.PI/180;
 					Kai.Rot(idxList,ry,"y",vData);
 
-					rx = -10 * Math.PI/180;
+					rx = Kai.Rnd(-10,10) * Math.PI/180;
 					Kai.Rot(idxList,rx,"x",vData);
 					
 					//이 Hole에서 가지가 시작됨
 					if(i == steps-1) mkHole = 1;
 					else if(i == steps-2) mkHole = 0;
-					else if(i == steps-3) mkHole = 1;
-					else if(i == steps-4) mkHole = 0;
-
 					Kai.TriWall(idxListLast,idxList,iData,mkHole,branches);
 
 					idxListLast = idxList;
@@ -177,7 +178,7 @@
 				Kai.TriQuad(idxListLast,iData);
 				
 				//Create Branches in the holes created in the trunk
-				//ePoints는 가지가 끝나는 곳 - bushes의 시작
+				//ePoints는 가지가 끝나는 곳 - bush의 시작
 				var ePoints = [];
 				for(var i=0; i < branches.length; i++) ePoints.push(createBranch(branches[i],vData,iData));
 
@@ -190,7 +191,6 @@
 				var cp = [0,0,0];	//Cross Product, used to save forward direction
 				var up = [0,1,0];	//Up Direction
 				
-				//create
 				for(var i = 0; i < 5; i++){
 					Kai.QuadCrossProd(idxPrev,src,cp,1);	//Figure out the forward direction to extrude
 					
@@ -217,7 +217,6 @@
 					Kai.TriWall(idxPrev,idxNext,iData,-1);		//Create Faces
 					
 					idxPrev = idxNext;							//Save for next loop to continue extruding
-					
 				}
 
 				//Get the center of the final quad created, this will be the position for bushes.
@@ -226,7 +225,6 @@
 				Kai.QuadCenterPos(idxPrev,src,endPoint)
 				return endPoint;
 			}
-
 
 			function createBush(iniPos){
 				var verSteps = 10,
@@ -260,8 +258,8 @@
 						z = radius * Math.cos(elevation) * Math.sin(azimuth);	//Y
 
 						//Scale up
-						x *= 1;
-						z *= 1;
+						x *= 1.5;
+						z *= 1.5;
 
 						aryVerts.push(x,y,z);
 					}
@@ -269,17 +267,11 @@
 
 				TreeExt.Mesh.triangleStrip(horSteps,verSteps,aryIndex,true,false);
 				var vao = Tree.Shaders.VAO.standardMesh("MorphCircle",3,aryVerts,null,null,aryIndex,false);
-				var model = new Tree.Renderable(vao,"MatLowPoly");
+				var model = new Tree.Renderable(vao,"matBush");
 				model.position.x = iniPos[0];
 				model.position.y = iniPos[1];
 				model.position.z = iniPos[2];
 				TreeApp.scene.push(model);
-				//var vao = Tree.Shaders.VAO.standardMesh("MorphCircle",3,aryVerts,null,null,null,false);
-				//return vao;
-			}
-
-			function ground(){
-
 			}
 		</script>
 	</head>
@@ -287,127 +279,219 @@
 	<div><canvas id="TreeCanvas"></canvas></div>
 	<span id="lblFPS">0</div>
 
-	<script id="vertex_shader" type="x-shader/x-vertex">#version 300 es
-		layout(location=0) in vec4 a_position;
-		layout(location=1) in vec3 a_norm;
-		layout(location=2) in vec2 a_uv;
-
-		uniform UBOTransform{
-			mat4 matProjection;
-			mat4 matCameraView;
-			vec3 posCamera;
-		};
-
-		uniform mat4 uModalMatrix;
-		uniform mat3 uNormalMatrix;
-
-		out highp vec2 vUV;
-		out lowp vec3 color;
-
-		void main(void){
-			gl_PointSize = 12.0;
-			if(a_position.w == 0.0) color = vec3(1.0,0.0,0.0);
-			else if(a_position.w == 1.0) color = vec3(0.0,1.0,0.0);
-			else if(a_position.w == 2.0) color = vec3(0.0,0.0,1.0);
-			else if(a_position.w == 9.0) color = vec3(1.0,0.5,0.5);
-			else color = vec3(0.6,0.6,0.6);
-
-			vUV = a_uv;
-			gl_Position =  matProjection * matCameraView * uModalMatrix * vec4(a_position.xyz, 1.0);
-		}
-	</script>
-	<script id="fragment_shader" type="x-shader/x-fragment">#version 300 es
-		precision mediump float;
-		in highp vec2 vUV;
-		in lowp vec3 color;
-		out vec4 outColor;
-
-		void main(void){
-			outColor = vec4(color,1.0);
-		}
-	</script>
-
-	<script id="vertex_lowpoly" type="x-shader/x-vertex">#version 300 es
-		layout(location=0) in vec4 a_position;
-		layout(location=1) in vec3 a_norm;
-		layout(location=2) in vec2 a_uv;
-
-		uniform UBOTransform{
-			mat4 matProjection;
-			mat4 matCameraView;
-			vec3 posCamera;
-		};
-
-		uniform mat4 uModalMatrix;
-		//uniform mat3 uNormalMatrix;
-
-		out vec3 vWorldPos;
-		out vec3 vCameraPos;
-		out vec2 vLowPoly;
-
-		const float uColumnCnt = 5.0;
-
-		void main(void){
-			//Identify Triangles in Quad, If y == 1, Then its the top triangle
-			//01 01
-			//00 01
-			float verID	= float(gl_VertexID);
-			float r		= floor(verID / uColumnCnt);
-			if(mod(r,2.0) == 0.0) vLowPoly = vec2(0.0,1.0);
-			else{
-				// i % col == colIndex -> colIndex % 2 = 0-1
-				if( mod( mod(verID,uColumnCnt) ,2.0) == 0.0) vLowPoly = vec2(0.0,0.0);
-				//if( mod( verID ,2.0) == 0.0) vLowPoly = vec2(0.0,0.0);
-				else vLowPoly = vec2(0.0,1.0);
-			}
-
-			//Set Out values
-			vec4 wpos 	= uModalMatrix * vec4(a_position.xyz,1.0);
-			vWorldPos	= wpos.xyz;
-			vCameraPos	= (inverse(matCameraView) * vec4(posCamera,1.0)).xyz; //Need to pass Camera pos turned to WorldSpace avoid inverse matrix
-			gl_Position	= matProjection * matCameraView * wpos;
-		}
-	</script>
-
-	<script id="fragment_lowpoly" type="x-shader/x-fragment">#version 300 es
-		precision mediump float;
+		<script id="vertex_shader" type="x-shader/x-vertex">#version 300 es
+			layout(location=0) in vec4 a_position;
+			layout(location=1) in vec3 a_norm;
+			layout(location=2) in vec2 a_uv;
 	
-		in vec3 vWorldPos;
-		in vec3 vCameraPos;
-		in vec2 vLowPoly;
-
-		const vec3 uLightPos			= vec3(4.0,2.0,1.0);
-		const vec3 uBaseColor			= vec3(1.0,0.5,0.5);
-		const vec3 uLightColor			= vec3(1.0,1.0,1.0);
-
-		const float uAmbientStrength	= 0.5;
-		const float uDiffuseStrength	= 0.5;
-		const float uSpecularStrength	= 0.2f;	//0.15
-		const float uSpecularShininess	= 1.0f; //256.0
-
-		out vec4 outColor;
-
-		void main(void){
-			float LowPolyFactor = (vLowPoly.y >= 0.9999)? 1.1 : 1.0;	//Determine LowPoly Strength
-			vec3 pixelNorm = normalize( cross( dFdx(vWorldPos), dFdy(vWorldPos) ) ); //Calc the Normal of the Rasterizing Pixel
-
-			//Ambient Lighting
-			vec3 cAmbient		= uLightColor * uAmbientStrength;
+			uniform UBOTransform{
+				mat4 matProjection;
+				mat4 matCameraView;
+				vec3 posCamera;
+			};
+	
+			uniform mat4 uModalMatrix;
+			uniform mat3 uNormalMatrix;
+	
+			out highp vec2 vUV;
+			out lowp vec3 color;
+	
+			void main(void){
+				if(a_position.w == 0.0) color = vec3(1.0,0.0,0.0);
+				else if(a_position.w == 1.0) color = vec3(0.0,1.0,0.0);
+				else color = vec3(0.6,0.6,0.6);
+	
+				vUV = a_uv;
+				gl_Position =  matProjection * matCameraView * uModalMatrix * vec4(a_position.xyz, 1.0);
+			}
+		</script>
+		<script id="fragment_shader" type="x-shader/x-fragment">#version 300 es
+			precision mediump float;
+			in highp vec2 vUV;
+			in lowp vec3 color;
+			out vec4 outColor;
+	
+			void main(void){
+				outColor = vec4(color,1.0);
+			}
+		</script>
+	
+	
+		<script id="vertex_lowpoly" type="x-shader/x-vertex">#version 300 es
+			layout(location=0) in vec4 a_position;
+			layout(location=1) in vec3 a_norm;
+			layout(location=2) in vec2 a_uv;
+	
+			uniform UBOTransform{
+				mat4 matProjection;
+				mat4 matCameraView;
+				vec3 posCamera;
+			};
+	
+			uniform mat4 uModalMatrix;
+			//uniform mat3 uNormalMatrix;
+			uniform vec3 uColorAry[3];
+	
+			out vec3 vWorldPos;
+			out vec3 vCameraPos;
+			out vec2 vLowPoly;
+			out vec3 vColor;
+	
+			const float uColumnCnt = 20.0;
+	
+			void main(void){
+				vColor = uColorAry[ int(a_position.w) ];
+				if(vColor == vec3(0.0)) vColor = uColorAry[0];
+				//vColor = uColorAry[0];
+	
+				//Identify Triangles in Quad, If y == 1, Then its the top triangle
+				//01 01
+				//00 01
+				float verID	= float(gl_VertexID);
+				float r		= floor(verID / uColumnCnt);
+				if(mod(r,2.0) == 0.0) vLowPoly = vec2(0.0,1.0);
+				else{
+					// i % col == colIndex -> colIndex % 2 = 0-1
+					if( mod( mod(verID,uColumnCnt) ,2.0) == 0.0) vLowPoly = vec2(0.0,0.0);
+					//if( mod( verID ,2.0) == 0.0) vLowPoly = vec2(0.0,0.0);
+					else vLowPoly = vec2(0.0,1.0);
+				}
+	
+				//Set Out values
+				vec4 wpos 	= uModalMatrix * vec4(a_position.xyz,1.0);
+				vWorldPos	= wpos.xyz;
+				vCameraPos	= (inverse(matCameraView) * vec4(posCamera,1.0)).xyz; //Need to pass Camera pos turned to WorldSpace avoid inverse matrix
+				gl_Position	= matProjection * matCameraView * wpos;
+			}
+		</script>
+	
+		<script id="fragment_lowpoly" type="x-shader/x-fragment">#version 300 es
+			precision mediump float;
+		
+			in vec3 vWorldPos;
+			in vec3 vCameraPos;
+			in vec2 vLowPoly;
+			in vec3 vColor;
+	
+			const vec3 uLightPos			= vec3(4.0,2.0,1.0);
+			const vec3 uBaseColor			= vec3(1.0,0.5,0.5);
+			const vec3 uLightColor			= vec3(1.0,1.0,1.0);
+	
+			const float uAmbientStrength	= 0.5;
+			const float uDiffuseStrength	= 0.5;
+			const float uSpecularStrength	= 0.2f;	//0.15
+			const float uSpecularShininess	= 1.0f; //256.0
+	
+			out vec4 outColor;
+	
+			void main(void){
+				float LowPolyFactor = (vLowPoly.y >= 0.9999)? 1.1 : 1.0;	//Determine LowPoly Strength
+				vec3 pixelNorm = normalize( cross( dFdx(vWorldPos), dFdy(vWorldPos) ) ); //Calc the Normal of the Rasterizing Pixel
+	
+				//Ambient Lighting
+				vec3 cAmbient		= uLightColor * uAmbientStrength;
+				
+				//Diffuse Lighting
+				vec3 lightVector	= normalize(uLightPos - vWorldPos); //light direction based on pixel world position
+				float diffuseAngle	= max( dot(pixelNorm,lightVector) ,0.0); //Angle between Light Direction and Pixel Direction (1==90d)
+				vec3 cDiffuse		= uLightColor * diffuseAngle * uDiffuseStrength;
+	
+				//Specular Lighting
+				vec3 camVector		= normalize(vCameraPos - vWorldPos); //Camera Direction based on pixel world position
+				vec3 reflectVector	= reflect(-lightVector, pixelNorm); //Reflective direction of line from pixel direction as pivot.
+				float specular		= pow( max( dot(reflectVector,camVector) ,0.0), uSpecularShininess ); //Angle of reflected light and camera eye
+				vec3 cSpecular		= uLightColor * specular * uSpecularStrength;
+	
+				//Final Color
+				//outColor = vec4( uBaseColor * ((cAmbient + cDiffuse + cSpecular) * LowPolyFactor), 1.0);
+				outColor = vec4( vColor * ((cAmbient + cDiffuse + cSpecular) * LowPolyFactor), 1.0);
+			}
+		</script>
+	
+		<script id="vertex_lowpoly1c" type="x-shader/x-vertex">#version 300 es
+			layout(location=0) in vec3 a_position;
+			layout(location=1) in vec3 a_norm;
+			layout(location=2) in vec2 a_uv;
+	
+			uniform UBOTransform{
+				mat4 matProjection;
+				mat4 matCameraView;
+				vec3 posCamera;
+			};
+	
+			uniform mat4 uModalMatrix;
+			//uniform mat3 uNormalMatrix;
 			
-			//Diffuse Lighting
-			vec3 lightVector	= normalize(uLightPos - vWorldPos); //light direction based on pixel world position
-			float diffuseAngle	= max( dot(pixelNorm,lightVector) ,0.0); //Angle between Light Direction and Pixel Direction (1==90d)
-			vec3 cDiffuse		= uLightColor * diffuseAngle * uDiffuseStrength;
-
-			//Specular Lighting
-			vec3 camVector		= normalize(vCameraPos - vWorldPos); //Camera Direction based on pixel world position
-			vec3 reflectVector	= reflect(-lightVector, pixelNorm); //Reflective direction of line from pixel direction as pivot.
-			float specular		= pow( max( dot(reflectVector,camVector) ,0.0), uSpecularShininess ); //Angle of reflected light and camera eye
-			vec3 cSpecular		= uLightColor * specular * uSpecularStrength;
-
-			//Final Color
-			outColor = vec4( uBaseColor * ((cAmbient + cDiffuse + cSpecular) * LowPolyFactor), 1.0);
-		}
-	</script>
+			out vec3 vWorldPos;
+			out vec3 vCameraPos;
+			out vec2 vLowPoly;
+	
+			const float uColumnCnt = 20.0;
+	
+			void main(void){
+				//Identify Triangles in Quad, If y == 1, Then its the top triangle
+				//01 01
+				//00 01
+				float verID	= float(gl_VertexID);
+				float r		= floor(verID / uColumnCnt);
+				if(mod(r,2.0) == 0.0) vLowPoly = vec2(0.0,1.0);
+				else{
+					// i % col == colIndex -> colIndex % 2 = 0-1
+					if( mod( mod(verID,uColumnCnt) ,2.0) == 0.0) vLowPoly = vec2(0.0,0.0);
+					//if( mod( verID ,2.0) == 0.0) vLowPoly = vec2(0.0,0.0);
+					else vLowPoly = vec2(0.0,1.0);
+				}
+	
+				//Set Out values
+				vec4 wpos 	= uModalMatrix * vec4(a_position.xyz,1.0);
+				vWorldPos	= wpos.xyz;
+				vCameraPos	= (inverse(matCameraView) * vec4(posCamera,1.0)).xyz; //Need to pass Camera pos turned to WorldSpace avoid inverse matrix
+				gl_Position	= matProjection * matCameraView * wpos;
+			}
+		</script>
+	
+		<script id="fragment_lowpoly1c" type="x-shader/x-fragment">#version 300 es
+			precision mediump float;
+		
+			uniform vec3 uColor;
+	
+			in vec3 vWorldPos;
+			in vec3 vCameraPos;
+			in vec2 vLowPoly;
+	
+			const vec3 uLightPos			= vec3(4.0,2.0,1.0);
+			const vec3 uBaseColor			= vec3(1.0,0.5,0.5);
+			const vec3 uLightColor			= vec3(1.0,1.0,1.0);
+	
+			const float uAmbientStrength	= 0.5;
+			const float uDiffuseStrength	= 0.5;
+			const float uSpecularStrength	= 0.2f;	//0.15
+			const float uSpecularShininess	= 1.0f; //256.0
+	
+			out vec4 outColor;
+	
+			void main(void){
+				float LowPolyFactor = (vLowPoly.y >= 0.9999)? 1.1 : 1.0;	//Determine LowPoly Strength
+				vec3 pixelNorm = normalize( cross( dFdx(vWorldPos), dFdy(vWorldPos) ) ); //Calc the Normal of the Rasterizing Pixel
+	
+				//Ambient Lighting
+				vec3 cAmbient		= uLightColor * uAmbientStrength;
+				
+				//Diffuse Lighting
+				vec3 lightVector	= normalize(uLightPos - vWorldPos); //light direction based on pixel world position
+				float diffuseAngle	= max( dot(pixelNorm,lightVector) ,0.0); //Angle between Light Direction and Pixel Direction (1==90d)
+				vec3 cDiffuse		= uLightColor * diffuseAngle * uDiffuseStrength;
+	
+				//Specular Lighting
+				vec3 camVector		= normalize(vCameraPos - vWorldPos); //Camera Direction based on pixel world position
+				vec3 reflectVector	= reflect(-lightVector, pixelNorm); //Reflective direction of line from pixel direction as pivot.
+				float specular		= pow( max( dot(reflectVector,camVector) ,0.0), uSpecularShininess ); //Angle of reflected light and camera eye
+				vec3 cSpecular		= uLightColor * specular * uSpecularStrength;
+	
+				//Final Color
+				//outColor = vec4( uBaseColor * ((cAmbient + cDiffuse + cSpecular) * LowPolyFactor), 1.0);
+				outColor = vec4( uColor * ((cAmbient + cDiffuse + cSpecular) * LowPolyFactor), 1.0);
+			}
+		</script>
 </body>
 </html>
