@@ -77,8 +77,8 @@
 				gModel.verts.data.push(
 					-4.0,0.0,-4.0,0.0,
 					-4.0,0.0,4.0,1.0,
-					4.0,0.0,4.0,2.0,
-					4.0,0.0,-4.0,3.0
+					4.0,0.0,6.0,2.0,
+					4.0,0.0,-6.0,3.0
 				);
 				createCliff(gModel);
 
@@ -140,7 +140,7 @@
 			function createTree(gModel){
 				var vData = gModel.verts.data,	//ref to vert data
 					iData = gModel.index.data,	//ref to index data
-					steps = 7,					//How many times to extrude the trunks
+					steps = 8,					//How many times to extrude the trunks
 					mkHole = -1,				//When to leave holes in the trunk
 					idxList = null,				//Index Array List
 					idxListLast = [0,1,2,3],	//Previous Index Array List
@@ -169,6 +169,9 @@
 					//이 Hole에서 가지가 시작됨
 					if(i == steps-1) mkHole = 1;
 					else if(i == steps-2) mkHole = 0;
+					else if(i == steps-3) mkHole = 1;
+					else if(i == steps-4) mkHole =0;
+
 					Kai.TriWall(idxListLast,idxList,iData,mkHole,branches);
 
 					idxListLast = idxList;

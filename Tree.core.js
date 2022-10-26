@@ -2213,7 +2213,6 @@ var Tree = (function(){
 		}
 	}
 
-	//TODO : Other Optimization, Even if Material Changes, Check if dif material but the same shader.
 	// Also try to sort the Renderables by Material, Shaders, etc to make sure we shift Shaders/uniforms as little as possible.
 	// Also try to find a way to filter out renderables that are not in the line of sight OR beyond our viewing range, no point rendering what we can't see.
 	var Renderer = (function(){

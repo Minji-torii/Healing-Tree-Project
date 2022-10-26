@@ -12,7 +12,7 @@ TreeApp = {
 		Tree.Init("TreeCanvas").fClearColor("FFFFFF").fFitScreen(1,1).fClear();
 
 		this.uboTransform	= Tree.Shaders.UBO.createTransformUBO();
-		this.mainCamera		= new Tree.CameraOrbit().setPosition(0,3,10).setEulerDegrees(-15,45,0);
+		this.mainCamera		= new Tree.CameraOrbit().setPosition(0,5,20).setEulerDegrees(-15,45,0);
 		this.ctrlCamera		= new Tree.KBMCtrl().addHandler("camera",new Tree.KBMCtrl_Viewport(this.mainCamera),true);
 
 		this.renderLoop		= new Tree.RenderLoop(onRender);
