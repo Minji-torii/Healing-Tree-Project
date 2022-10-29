@@ -56,6 +56,10 @@
 				mat = Tree.Shaders.Material.create("matBush","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("eb98d5"));
 				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
 
+				//포자
+				mat = Tree.Shaders.Material.create("MatLowStar","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFCCFF"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
 				//.......................................................
 				//Prepare our Renderables
 				gModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
@@ -85,6 +89,13 @@
 
 				gModel.update();
 				TreeApp.scene.push(gModel);
+
+			//////////////////////
+				for(var i=0; i < 70; i++){
+					planet = new Tree.Renderable(Tree.Primatives.PolarSphere(5, 5, 0.1),"MatLowStar");
+					planet.position.set(Kai.Rnd(-5,5),Kai.Rnd(5,12),Kai.Rnd(-5,5));
+					TreeApp.scene.push(planet);
+				}
 				//.......................................................
 				//Start Render Loop
 				TreeApp.renderLoop.start();
@@ -261,8 +272,8 @@
 						z = radius * Math.cos(elevation) * Math.sin(azimuth);	//Y
 
 						//Scale up
-						x *= 1.5;
-						z *= 1.5;
+						x *= 1.2;
+						z *= 1.2;
 
 						aryVerts.push(x,y,z);
 					}
