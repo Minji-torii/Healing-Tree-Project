@@ -75,7 +75,7 @@
 
 				gModel.update();
 				TreeApp.scene.push(gModel);
-///////////////////////////////////////////
+			///////////////////////
 				var gModel = new TreeExt.DynamicMesh(4,1,1,"matCliff"); // MatLowPoly MatDomShader
 				gModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
 				gModel.verts.data.push(
@@ -171,10 +171,10 @@
 					//Kai.Scale(idxList,[0.85,1.0,0.85],vData);		//Linear
 					//copy하고 줄이고, copy하고 줄이고하는 식으로 작동
 					
-					ry = Kai.Rnd(0,40) * Math.PI/180;
+					ry = 25 * Math.PI/180;
 					Kai.Rot(idxList,ry,"y",vData);
 
-					rx = Kai.Rnd(-10,10) * Math.PI/180;
+					rx = -2 * Math.PI/180;
 					Kai.Rot(idxList,rx,"x",vData);
 					
 					//이 Hole에서 가지가 시작됨
@@ -222,7 +222,7 @@
 
 					idxNext = Kai.Extrude(cp,idxPrev,src);		//Extrude
 					
-					var rad = Kai.Rnd(-45,2) * Math.PI/180;		//Random Rotation
+					var rad = -20 * Math.PI/180;		//Random Rotation
 
 					Kai.qRotCenter(rad,idxNext,src);			//Rotate our new vertices
 
@@ -243,7 +243,7 @@
 			function createBush(iniPos){
 				var verSteps = 10,
 					horSteps = 10,
-					iRadius = Kai.Rnd(1,2);
+					iRadius = 2;
 					radius = 2;
 
 				var i,x,y,z,
