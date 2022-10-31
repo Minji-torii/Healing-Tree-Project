@@ -116,9 +116,9 @@
 					k = 0;
 					Blossom(k);
 				};
-				// document.getElementById( "blossomGone" ).onclick = function () {
-				// 	blossomGone(k);
-				// };
+				document.getElementById( "blossomGone" ).onclick = function () {
+					blossomGone(k);
+				};
 
 				// //현재 씬 상태 저장 -> blossom으로 뭐 하기전에
 				// saveScene = _.cloneDeep(TreeApp.scene);
@@ -374,7 +374,7 @@
 				model.position.z = iniPos[2];
 				TreeApp.scene.push(model);
 			}
-			
+
 			function Blossom(amount){
 
 
@@ -383,7 +383,7 @@
 				if(amount > 0){
 					for(var i=0; i < amount; i++){
 						planet = new Tree.Renderable(Tree.Primatives.PolarSphere(5, 5, 0.1),"MatLowStar");
-						planet.position.set(Kai.Rnd(-5,5),Kai.Rnd(5,12),Kai.Rnd(-5,5));
+						planet.position.set(Kai.Rnd(-10,10),Kai.Rnd(7,12),Kai.Rnd(-10,10));
 						TreeApp.scene.push(planet);
 					}
 					//.......................................................
@@ -399,16 +399,32 @@
 			}
 			//구상 -> 벚꽃으로 아무것도 안한 scene을 저장한 상태에서 계속 해서 위치를 조금씩만 옮겨서 왼쪽 or 오른쪽으로 벚꽃이 가게 계속 rendering해주면 될 것 같은데
 			//조금만 더 생각해보자..
-			// function blossomGone(amount){
-			// 	saveLoc[0] -= 0.001;
-			// 	while(1){
-			// 			m = mult(m, translate(saveLoc, 0, 0, 0));
-			// 			planet.position = m;
-			// 			TreeApp.scene.push(planet);
-			//
-			// 			TreeApp.renderLoop.start();
-			// 	}
-			// }
+			function blossomGone(amount){
+				TreeApp.scene = [];
+				//defensive codding that for amount of the blossom < 0
+				for(var l = 0; l<12; l++) {
+					if (amount > 0) {
+						for (var i = 0; i < amount; i++) {
+							planet = new Tree.Renderable(Tree.Primatives.PolarSphere(5, 5, 0.1), "MatLowStar");
+							planet.position.set(Kai.Rnd(-10, 10), Kai.Rnd(7, 12) - l, Kai.Rnd(-10, 10));
+							TreeApp.scene.push(planet);
+						}
+						//.......................................................
+						//Start Render Loop
+						setInterval(TreeApp.renderLoop.start(), 2000);
+						// TreeApp.renderLoop.start();
+						// for(var j=0; j < amount; j++){
+						// 	TreeApp.scene.pop();
+						// }
+					}
+					else {
+						setInterval(TreeApp.renderLoop.start(), 2000);
+					}
+				}
+				k = 0;
+				setInterval(Blossom(k), 2000);
+
+			}
 		</script>
 	</head>
 <body>
