@@ -120,15 +120,77 @@
 				// 	blossomGone(k);
 				// };
 
-				//현재 씬 상태 저장 -> blossom으로 뭐 하기전에
-				saveScene = _.cloneDeep(TreeApp.scene);
-
+				// //현재 씬 상태 저장 -> blossom으로 뭐 하기전에
+				// saveScene = _.cloneDeep(TreeApp.scene);
 				TreeApp.renderLoop.start();
 			});
 
 
 			function onRender(dt){
 				TreeApp.update();
+				//Create Shaders and Materials
+				var mat;
+				Tree.Shaders.New("DomShader","vertex_shader","fragment_shader")
+						.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4")
+						.prepareUniformBlocks(TreeApp.uboTransform,0);
+
+				Tree.Shaders.New("LowPolyShader","vertex_lowpoly","fragment_lowpoly")
+						.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4","uColorAry","vec3")
+						.prepareUniformBlocks(TreeApp.uboTransform,0)
+						.setUniforms("uColorAry",Tree.Util.rgbArray("ff0000"));
+
+				Tree.Shaders.New("LowPolyShader1c","vertex_lowpoly1c","fragment_lowpoly1c")
+						.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4","uColor","vec3")
+						.prepareUniformBlocks(TreeApp.uboTransform,0);
+
+				Tree.Shaders.Material.create("MatDomShader","DomShader");
+
+				var mat;
+				//나무 색깔
+				mat = Tree.Shaders.Material.create("MatLowPoly","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("3d210c"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//절벽 색깔
+				mat = Tree.Shaders.Material.create("matCliff","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("a04d20"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//bush 색깔
+				mat = Tree.Shaders.Material.create("matBush","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("eb98d5"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//포자
+				mat = Tree.Shaders.Material.create("MatLowStar","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFCCFF"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//.......................................................
+				//Prepare our Renderables
+				gModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
+				gModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
+				gModel.verts.data.push(
+						-1.0,2.0,-1.0,0.0,
+						-1.0,2.0,1.0,1.0,
+						1.0,2.0,1.0,2.0,
+						1.0,2.0,-1.0,3.0
+				);
+				createTree(gModel);
+
+
+				gModel.update();
+				TreeApp.scene.push(gModel);
+				///////////////////////
+				var gModel = new TreeExt.DynamicMesh(4,1,1,"matCliff"); // MatLowPoly MatDomShader
+				gModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
+				gModel.verts.data.push(
+						-4.0,0.0,-4.0,0.0,
+						-4.0,0.0,4.0,1.0,
+						4.0,0.0,6.0,2.0,
+						4.0,0.0,-6.0,3.0
+				);
+				createCliff(gModel);
+
+
+				gModel.update();
+				TreeApp.scene.push(gModel);
 				Tree.Render(TreeApp.scene);
 			}
 
@@ -312,7 +374,11 @@
 				model.position.z = iniPos[2];
 				TreeApp.scene.push(model);
 			}
+			
 			function Blossom(amount){
+
+
+				TreeApp.scene = [];
 				//defensive codding that for amount of the blossom < 0
 				if(amount > 0){
 					for(var i=0; i < amount; i++){
@@ -323,7 +389,7 @@
 					//.......................................................
 					//Start Render Loop
 					TreeApp.renderLoop.start();
-					// for(var j=0; j <  amount; j++){
+					// for(var j=0; j < amount; j++){
 					// 	TreeApp.scene.pop();
 					// }
 				}
