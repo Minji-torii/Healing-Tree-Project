@@ -449,13 +449,42 @@
 		</script>
 	</head>
 <body>
+	<audio
+			autoplay
+			loop
+			src="/sound/background_music.mp3"
+			type="audio/mpeg"></audio>
 	<span>
-		<a href="#"><img id="increaseBlossom" src="./increaseBlossom.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/></a>
-		<a href="#"><img id="decreaseBlossom" src="./decreaseBlossom.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/></a>
-		<a href="#"><img id="clearBlossom" src="./clearBlossom.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/></a>
-		<a href="#"><img id="blossomGone" src="./blossomGone.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/></a>
+		<div onclick="play(1)"><a href="#"><img id="increaseBlossom" src="./increaseBlossom.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70 /><audio id="increase_blossom" src='./sound/increase_blossom.mp3'></audio></a></div>
+		<div onclick="play(2)"><a href="#"><img id="decreaseBlossom" src="./decreaseBlossom.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/><audio id="decrease_blossom" src='./sound/decrease_blossom.mp3'></audio></a></div>
+		<div onclick="play(3)"><a href="#"><img id="clearBlossom" src="./clearBlossom.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/><audio id="clean_blossom" src='./sound/clean_blossom.mp3'></audio></a></div>
+		<div onclick="play(4)"><a href="#"><img id="blossomGone" src="./blossomGone.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/></a></div>
 
 	</span>
+	<script type="text/javascript">
+		function play(i) {
+			var id;
+			if(i == 1){
+				id = "increase_blossom"
+			}
+			else if(i == 2){
+				id = "decrease_blossom"
+			}
+			else if(i == 3){
+				id = "clean_blossom"
+			}
+			else{
+				id = ""
+			}
+			var audio = document.getElementById(id);
+			if (audio.paused) {
+				audio.play();
+			}else{
+				audio.pause();
+				audio.currentTime = 0
+			}
+		}
+	</script>
 	<div><canvas id="TreeCanvas"></canvas></div>
 	<span id="lblFPS">0</span>
 
