@@ -5,7 +5,7 @@
 			html,body{margin:0px; padding:0px; width:100%; height:100%;}
 			body{background-color:#404040;}
 			canvas{border:0px solid black;}
-			div{display:flex; width:100%; height:100%; align-items:center; justify-content:center;}
+			div{display:flex; width:100%; height:90%; align-items:center; justify-content:center;}
 			#lblFPS{position:absolute; top:0px; left:0px; background:gray; color:white; font-weight:bold; padding:5px 5px; width:40px; text-align:center; font-family:arial; font-size:13px;}
 		</style>
 
@@ -15,13 +15,21 @@
 		<script src="Tree.Debug.js"></script>
 		<script src="Tree.ext.js"></script>
 		<script src="TreeApp.js"></script>
+		<script src="lodash.js"></script>
+		<script src="MV.js"></script>
 
 		<script src="Kai.js"></script>
 		<script src="Perlin.js"></script>
 
 		<script>
 			var gModel;
-
+			//벚꽃 생성관련
+			// k = amount of the blossom
+			//saveScene -> 벚꽃을 만들때마다 씬에서 벚꽃데이터를 밀어주지 않으면 벚꽃이 계속 있게 되는데 그 용도
+			var k = 0;
+			var saveScene;
+			var saveLoc = [0, 0, 0];
+			var m;
 			window.addEventListener("load",function(){
 				TreeApp.startup();
 
@@ -89,21 +97,101 @@
 
 				gModel.update();
 				TreeApp.scene.push(gModel);
-
 			//////////////////////
-				for(var i=0; i < 70; i++){
-					planet = new Tree.Renderable(Tree.Primatives.PolarSphere(5, 5, 0.1),"MatLowStar");
-					planet.position.set(Kai.Rnd(-5,5),Kai.Rnd(5,12),Kai.Rnd(-5,5));
-					TreeApp.scene.push(planet);
-				}
-				//.......................................................
-				//Start Render Loop
+				//초기에 k에 설정된 값은 0 -> 벚꽃 없음
+				//increase button 누르면 70개씩 늘어남
+				//decrease button 누르면 70개씩 줄어듦
+				//clear button누르면 벚꽃 사라짐
+				// blossomGone누르면 애들이 옆으로 푸슝 하고 날아감.
+				m = mat4();
+				document.getElementById( "increaseBlossom" ).onclick = function () {
+					k += 70;
+					Blossom(k);
+				};
+				document.getElementById( "decreaseBlossom" ).onclick = function () {
+					k -= 70;
+					Blossom(k);
+				};
+				document.getElementById( "clearBlossom" ).onclick = function () {
+					k = 0;
+					Blossom(k);
+				};
+				document.getElementById( "blossomGone" ).onclick = function () {
+					blossomGone(k);
+				};
+
+				// //현재 씬 상태 저장 -> blossom으로 뭐 하기전에
+				// saveScene = _.cloneDeep(TreeApp.scene);
 				TreeApp.renderLoop.start();
 			});
 
 
 			function onRender(dt){
+				//TreeApp.startup();
 				TreeApp.update();
+				//Create Shaders and Materials
+				var mat;
+				Tree.Shaders.New("DomShader","vertex_shader","fragment_shader")
+						.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4")
+						.prepareUniformBlocks(TreeApp.uboTransform,0);
+
+				Tree.Shaders.New("LowPolyShader","vertex_lowpoly","fragment_lowpoly")
+						.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4","uColorAry","vec3")
+						.prepareUniformBlocks(TreeApp.uboTransform,0)
+						.setUniforms("uColorAry",Tree.Util.rgbArray("ff0000"));
+
+				Tree.Shaders.New("LowPolyShader1c","vertex_lowpoly1c","fragment_lowpoly1c")
+						.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4","uColor","vec3")
+						.prepareUniformBlocks(TreeApp.uboTransform,0);
+
+				Tree.Shaders.Material.create("MatDomShader","DomShader");
+
+				var mat;
+				//나무 색깔
+				mat = Tree.Shaders.Material.create("MatLowPoly","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("3d210c"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//절벽 색깔
+				mat = Tree.Shaders.Material.create("matCliff","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("a04d20"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//bush 색깔
+				mat = Tree.Shaders.Material.create("matBush","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("eb98d5"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//포자
+				mat = Tree.Shaders.Material.create("MatLowStar","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFCCFF"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
+				//.......................................................
+				//Prepare our Renderables
+				gModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
+				gModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
+				gModel.verts.data.push(
+						-1.0,2.0,-1.0,0.0,
+						-1.0,2.0,1.0,1.0,
+						1.0,2.0,1.0,2.0,
+						1.0,2.0,-1.0,3.0
+				);
+				createTree(gModel);
+
+
+				gModel.update();
+				TreeApp.scene.push(gModel);
+				///////////////////////
+				var gModel = new TreeExt.DynamicMesh(4,1,1,"matCliff"); // MatLowPoly MatDomShader
+				gModel.drawMode = Tree.gl.TRIANGLES; //Tree.gl.POINTS; //Tree.gl.TRIANGLES;
+				gModel.verts.data.push(
+						-4.0,0.0,-4.0,0.0,
+						-4.0,0.0,4.0,1.0,
+						4.0,0.0,6.0,2.0,
+						4.0,0.0,-6.0,3.0
+				);
+				createCliff(gModel);
+
+
+				gModel.update();
+				TreeApp.scene.push(gModel);
 				Tree.Render(TreeApp.scene);
 			}
 
@@ -287,11 +375,56 @@
 				model.position.z = iniPos[2];
 				TreeApp.scene.push(model);
 			}
+
+			function Blossom(amount){
+				TreeApp.scene = [];
+				TreeApp.scene.push(TreeApp.debugLines,TreeApp.gridFloor);
+				//defensive codding that for amount of the blossom < 0
+				if(amount > 0){
+					for(var i=0; i < amount; i++){
+						planet = new Tree.Renderable(Tree.Primatives.PolarSphere(5, 5, 0.1),"MatLowStar");
+						planet.position.set(Kai.Rnd(-10,10),Kai.Rnd(7,12),Kai.Rnd(-10,10));
+						TreeApp.scene.push(planet);
+					}
+					//.......................................................
+					//Start Render Loop
+					// for(var j=0; j < amount; j++){
+					// 	TreeApp.scene.pop();
+					// }
+				}
+			}
+			//구상 -> 벚꽃으로 아무것도 안한 scene을 저장한 상태에서 계속 해서 위치를 조금씩만 옮겨서 왼쪽 or 오른쪽으로 벚꽃이 가게 계속 rendering해주면 될 것 같은데
+			//조금만 더 생각해보자..
+			function blossomGone(amount){
+				TreeApp.scene = [];
+				//defensive codding that for amount of the blossom < 0
+				for(var l = 0; l<10; l++) {
+					if (amount > 0) {
+						for (var i = 0; i < amount; i++) {
+							planet = new Tree.Renderable(Tree.Primatives.PolarSphere(5, 5, 0.1), "MatLowStar");
+							planet.position.set(Kai.Rnd(-10, 10), Kai.Rnd(7, 12) - l, Kai.Rnd(-10, 10));
+							TreeApp.scene.push(planet);
+						}
+						//.......................................................
+						//Start Render Loop
+						TreeApp.renderLoop.start();
+						// TreeApp.renderLoop.start();
+						// for(var j=0; j < amount; j++){
+						// 	TreeApp.scene.pop();
+						// }
+					}
+					else {
+						TreeApp.renderLoop.start();
+					}
+				}
+
+			}
 		</script>
 	</head>
 <body>
 	<div><canvas id="TreeCanvas"></canvas></div>
-	<span id="lblFPS">0</div>
+	<span id="lblFPS">0</span>
+
 
 		<script id="vertex_shader" type="x-shader/x-vertex">#version 300 es
 			layout(location=0) in vec4 a_position;
@@ -329,7 +462,6 @@
 				outColor = vec4(color,1.0);
 			}
 		</script>
-	
 	
 		<script id="vertex_lowpoly" type="x-shader/x-vertex">#version 300 es
 			layout(location=0) in vec4 a_position;
@@ -507,5 +639,11 @@
 				outColor = vec4( uColor * ((cAmbient + cDiffuse + cSpecular) * LowPolyFactor), 1.0);
 			}
 		</script>
+	<span>
+		<button id="increaseBlossom">increase blossom</button>
+		<button id="decreaseBlossom">decrease blossom</button>
+		<button id="clearBlossom">clear blossom</button>
+		<button id="blossomGone">blossom gone</button>
+	</span>
 </body>
 </html>

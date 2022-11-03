@@ -9,7 +9,7 @@ TreeApp = {
 	scene			:[],
 
 	startup:function(){
-		Tree.Init("TreeCanvas").fClearColor("FFFFFF").fFitScreen(1,1).fClear();
+		Tree.Init("TreeCanvas").fClearColor("FF00FF").fFitScreen(1,0.8).fClear();
 
 		this.uboTransform	= Tree.Shaders.UBO.createTransformUBO();
 		this.mainCamera		= new Tree.CameraOrbit().setPosition(0,5,20).setEulerDegrees(-15,45,0);
