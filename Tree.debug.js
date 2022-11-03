@@ -21,7 +21,7 @@ Tree.Debug.GridFloor = class{
 		var fShader = '#version 300 es\n' +
 			'precision mediump float;' +
 			'out vec4 finalColor;' +
-			'void main(void){ finalColor = vec4(0.8,0.8,0.8,1.0); }';
+			'void main(void){ finalColor = vec4( 0.1, 0.4, 0.6 ,1.0); }';
 
 			Tree.Shaders.New("TreeGridFloor",vShader,fShader)
 			.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4")
@@ -36,7 +36,7 @@ Tree.Debug.GridFloor = class{
 		//Dynamiclly create a grid
 		var verts = [],
 			size = 30,			// W/H of the outer box of the grid, from origin we can only go 1 unit in each direction, so from left to right is 2 units max
-			div = 60.0,			// How to divide up the grid
+			div = 1000.0,			// How to divide up the grid
 			step = size / div,	// Steps between each line, just a number we increment by for each line in the grid.
 			half = size / 2;	// From origin the starting position is half the size.
 

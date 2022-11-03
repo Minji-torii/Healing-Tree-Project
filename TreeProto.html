@@ -3,10 +3,15 @@
 	<head>
 		<style>
 			html,body{margin:0px; padding:0px; width:100%; height:100%;}
-			body{background-color:#404040;}
+			body{background-color:#000031;}
 			canvas{border:0px solid black;}
-			div{display:flex; width:100%; height:95%; align-items:center; justify-content:center;}
+			div{display:flex; width:100%; height:90%; align-items:center; justify-content:center;}
 			#lblFPS{position:absolute; top:0px; left:0px; background:gray; color:white; font-weight:bold; padding:5px 5px; width:40px; text-align:center; font-family:arial; font-size:13px;}
+			img{vertical-align: bottom;background-color:transparent;object-fit: cover;}
+			span{
+				display: flex;
+				justify-content: center;
+			}
 		</style>
 
 		<script src="Tree.core.js"></script>
@@ -33,7 +38,7 @@
 			var m;
 			window.addEventListener("load",function(){
 				TreeApp.startup();
-
+				
 				//.......................................................
 				//Create Shaders and Materials
 				var mat;
@@ -69,6 +74,10 @@
 				mat = Tree.Shaders.Material.create("MatLowStar","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFCCFF"));
 				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
 
+				//달
+				mat = Tree.Shaders.Material.create("MatLowMoon","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFFFFF"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
 				//.......................................................
 				//Prepare our Renderables
 				gModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
@@ -99,6 +108,10 @@
 				gModel.update();
 				TreeApp.scene.push(gModel);
 			//////////////////////
+				planet = new Tree.Renderable(Tree.Primatives.PolarSphere(10, 4, 2),"MatLowMoon");
+				planet.position.set(-10,12,-5);
+				TreeApp.scene.push(planet);
+
 				//초기에 k에 설정된 값은 0 -> 벚꽃 없음
 				//increase button 누르면 70개씩 늘어남
 				//decrease button 누르면 70개씩 줄어듦
@@ -114,11 +127,19 @@
 					Blossom(k);
 				};
 				document.getElementById( "clearBlossom" ).onclick = function () {
+					//when click the clear button 'j' must become zero
+					j = 0;
 					k = 0;
 					Blossom(k);
 				};
 				document.getElementById( "blossomGone" ).onclick = function () {
+					//defensive codding that for the j is larger than the 12,
+					//so it looks recursive behavior even the user push the blossomGone button more that 12 times.
+					if(j == 12){
+						j = 0;
+					}
 					j += 1;
+
 					blossomGone(k);
 				};
 
@@ -164,6 +185,10 @@
 				mat = Tree.Shaders.Material.create("MatLowStar","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFCCFF"));
 				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
 
+				//달
+				mat = Tree.Shaders.Material.create("MatLowMoon","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFFFFF"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
 				//.......................................................
 				//Prepare our Renderables
 				gModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
@@ -190,6 +215,9 @@
 				);
 				createCliff(gModel);
 
+				planet = new Tree.Renderable(Tree.Primatives.PolarSphere(10, 4, 2),"MatLowMoon");
+				planet.position.set(-10,12,-5);
+				TreeApp.scene.push(planet);
 
 				gModel.update();
 				TreeApp.scene.push(gModel);
@@ -378,9 +406,8 @@
 			}
 
 			function Blossom(amount){
-
-
 				TreeApp.scene = [];
+				TreeApp.scene.push(TreeApp.debugLines,TreeApp.gridFloor);
 				//defensive codding that for amount of the blossom < 0
 				if(amount > 0){
 					for(var i=0; i < amount; i++){
@@ -390,23 +417,18 @@
 					}
 					//.......................................................
 					//Start Render Loop
-					TreeApp.renderLoop.start();
 					// for(var j=0; j < amount; j++){
 					// 	TreeApp.scene.pop();
 					// }
-				}
-				else{
-					TreeApp.renderLoop.start();
 				}
 			}
 			//구상 -> 벚꽃으로 아무것도 안한 scene을 저장한 상태에서 계속 해서 위치를 조금씩만 옮겨서 왼쪽 or 오른쪽으로 벚꽃이 가게 계속 rendering해주면 될 것 같은데
 			//조금만 더 생각해보자..
 			function blossomGone(amount){
-				TreeApp.scene = [];
 				//defensive codding that for amount of the blossom < 0
 				for(var l = 0; l < j; l++) {
 					TreeApp.scene = [];
-
+					TreeApp.scene.push(TreeApp.debugLines,TreeApp.gridFloor);
 					if (amount > 0) {
 						for (var i = 0; i < amount; i++) {
 							planet = new Tree.Renderable(Tree.Primatives.PolarSphere(5, 5, 0.1), "MatLowStar");
@@ -427,6 +449,42 @@
 		</script>
 	</head>
 <body>
+	<audio
+			autoplay
+			loop
+			src="/sound/background_music.mp3"
+			type="audio/mpeg"></audio>
+	<span>
+		<div onclick="play(1)"><a href="#"><img id="increaseBlossom" src="./increaseBlossom.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70 /><audio id="increase_blossom" src='./sound/increase_blossom.mp3'></audio></a></div>
+		<div onclick="play(2)"><a href="#"><img id="decreaseBlossom" src="./decreaseBlossom.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/><audio id="decrease_blossom" src='./sound/decrease_blossom.mp3'></audio></a></div>
+		<div onclick="play(3)"><a href="#"><img id="clearBlossom" src="./clearBlossom.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/><audio id="clean_blossom" src='./sound/clean_blossom.mp3'></audio></a></div>
+		<div onclick="play(4)"><a href="#"><img id="blossomGone" src="./blossomGone.png" alt="" onclick="clickBtn();" border="0" width = 70 height = 70/></a></div>
+
+	</span>
+	<script type="text/javascript">
+		function play(i) {
+			var id;
+			if(i == 1){
+				id = "increase_blossom"
+			}
+			else if(i == 2){
+				id = "decrease_blossom"
+			}
+			else if(i == 3){
+				id = "clean_blossom"
+			}
+			else{
+				id = ""
+			}
+			var audio = document.getElementById(id);
+			if (audio.paused) {
+				audio.play();
+			}else{
+				audio.pause();
+				audio.currentTime = 0
+			}
+		}
+	</script>
 	<div><canvas id="TreeCanvas"></canvas></div>
 	<span id="lblFPS">0</span>
 
@@ -455,7 +513,6 @@
 	
 				vUV = a_uv;
 				gl_Position =  matProjection * matCameraView * uModalMatrix * vec4(a_position.xyz, 1.0);
-
 			}
 		</script>
 		<script id="fragment_shader" type="x-shader/x-fragment">#version 300 es
@@ -468,7 +525,6 @@
 				outColor = vec4(color,1.0);
 			}
 		</script>
-
 	
 		<script id="vertex_lowpoly" type="x-shader/x-vertex">#version 300 es
 			layout(location=0) in vec4 a_position;
@@ -646,11 +702,6 @@
 				outColor = vec4( uColor * ((cAmbient + cDiffuse + cSpecular) * LowPolyFactor), 1.0);
 			}
 		</script>
-	<span>
-		<button id="increaseBlossom">increase blossom</button>
-		<button id="decreaseBlossom">decrease blossom</button>
-		<button id="clearBlossom">clear blossom</button>
-		<button id="blossomGone">blossom gone</button>
-	</span>
+
 </body>
 </html>
