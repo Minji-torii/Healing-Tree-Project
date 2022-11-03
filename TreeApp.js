@@ -9,10 +9,10 @@ TreeApp = {
 	scene			:[],
 
 	startup:function(){
-		Tree.Init("TreeCanvas").fClearColor("FF00FF").fFitScreen(1,0.8).fClear();
-
+		Tree.Init("TreeCanvas").fClearColor(" #00314e").fFitScreen(1,0.9).fClear();
+		//#005282 #004975 #004168 #00395b #00314e #002941 #002034
 		this.uboTransform	= Tree.Shaders.UBO.createTransformUBO();
-		this.mainCamera		= new Tree.CameraOrbit().setPosition(0,5,20).setEulerDegrees(-15,45,0);
+		this.mainCamera		= new Tree.CameraOrbit().setPosition(0,5,19).setEulerDegrees(-15,0,0);
 		this.ctrlCamera		= new Tree.KBMCtrl().addHandler("camera",new Tree.KBMCtrl_Viewport(this.mainCamera),true);
 
 		this.renderLoop		= new Tree.RenderLoop(onRender);

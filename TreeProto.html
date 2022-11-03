@@ -5,7 +5,7 @@
 			html,body{margin:0px; padding:0px; width:100%; height:100%;}
 			body{background-color:#404040;}
 			canvas{border:0px solid black;}
-			div{display:flex; width:100%; height:90%; align-items:center; justify-content:center;}
+			div{display:flex; width:100%; height:95%; align-items:center; justify-content:center;}
 			#lblFPS{position:absolute; top:0px; left:0px; background:gray; color:white; font-weight:bold; padding:5px 5px; width:40px; text-align:center; font-family:arial; font-size:13px;}
 		</style>
 
@@ -27,12 +27,13 @@
 			// k = amount of the blossom
 			//saveScene -> 벚꽃을 만들때마다 씬에서 벚꽃데이터를 밀어주지 않으면 벚꽃이 계속 있게 되는데 그 용도
 			var k = 0;
+			var j = 0;
 			var saveScene;
 			var saveLoc = [0, 0, 0];
 			var m;
 			window.addEventListener("load",function(){
 				TreeApp.startup();
-
+				
 				//.......................................................
 				//Create Shaders and Materials
 				var mat;
@@ -68,6 +69,10 @@
 				mat = Tree.Shaders.Material.create("MatLowStar","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFCCFF"));
 				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
 
+				//달
+				mat = Tree.Shaders.Material.create("MatLowMoon","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFFFFF"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
 				//.......................................................
 				//Prepare our Renderables
 				gModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
@@ -98,6 +103,10 @@
 				gModel.update();
 				TreeApp.scene.push(gModel);
 			//////////////////////
+				planet = new Tree.Renderable(Tree.Primatives.PolarSphere(10, 4, 2),"MatLowMoon");
+				planet.position.set(-10,12,-5);
+				TreeApp.scene.push(planet);
+
 				//초기에 k에 설정된 값은 0 -> 벚꽃 없음
 				//increase button 누르면 70개씩 늘어남
 				//decrease button 누르면 70개씩 줄어듦
@@ -117,6 +126,7 @@
 					Blossom(k);
 				};
 				document.getElementById( "blossomGone" ).onclick = function () {
+					j += 1;
 					blossomGone(k);
 				};
 
@@ -127,7 +137,6 @@
 
 
 			function onRender(dt){
-				//TreeApp.startup();
 				TreeApp.update();
 				//Create Shaders and Materials
 				var mat;
@@ -163,6 +172,10 @@
 				mat = Tree.Shaders.Material.create("MatLowStar","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFCCFF"));
 				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
 
+				//달
+				mat = Tree.Shaders.Material.create("MatLowMoon","LowPolyShader1c").setUniforms("uColor",Tree.Util.rgbArray("FFFFFF"));
+				mat.drawMode = Tree.gl.TRIANGLE_STRIP;
+
 				//.......................................................
 				//Prepare our Renderables
 				gModel = new TreeExt.DynamicMesh(4,1,1,"MatLowPoly"); // MatLowPoly MatDomShader
@@ -189,6 +202,9 @@
 				);
 				createCliff(gModel);
 
+				planet = new Tree.Renderable(Tree.Primatives.PolarSphere(10, 4, 2),"MatLowMoon");
+				planet.position.set(-10,12,-5);
+				TreeApp.scene.push(planet);
 
 				gModel.update();
 				TreeApp.scene.push(gModel);
@@ -396,25 +412,23 @@
 			//구상 -> 벚꽃으로 아무것도 안한 scene을 저장한 상태에서 계속 해서 위치를 조금씩만 옮겨서 왼쪽 or 오른쪽으로 벚꽃이 가게 계속 rendering해주면 될 것 같은데
 			//조금만 더 생각해보자..
 			function blossomGone(amount){
-				TreeApp.scene = [];
 				//defensive codding that for amount of the blossom < 0
-				for(var l = 0; l<10; l++) {
+				for(var l = 0; l < j; l++) {
+					TreeApp.scene = [];
+					TreeApp.scene.push(TreeApp.debugLines,TreeApp.gridFloor);
 					if (amount > 0) {
 						for (var i = 0; i < amount; i++) {
 							planet = new Tree.Renderable(Tree.Primatives.PolarSphere(5, 5, 0.1), "MatLowStar");
-							planet.position.set(Kai.Rnd(-10, 10), Kai.Rnd(7, 12) - l, Kai.Rnd(-10, 10));
+							planet.position.set(Kai.Rnd(-10, 10), Kai.Rnd(7, 12) - j, Kai.Rnd(-10, 10));
 							TreeApp.scene.push(planet);
 						}
 						//.......................................................
 						//Start Render Loop
-						TreeApp.renderLoop.start();
+						//
 						// TreeApp.renderLoop.start();
 						// for(var j=0; j < amount; j++){
 						// 	TreeApp.scene.pop();
 						// }
-					}
-					else {
-						TreeApp.renderLoop.start();
 					}
 				}
 
