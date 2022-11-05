@@ -8,7 +8,7 @@ Term Project for Computer Graphics class
 Run html to run the project. Rendering of most objects runs in html.
 
 
-### Installing
+## Installing
 
 basic components of WebGL. Java, HTML..
 
