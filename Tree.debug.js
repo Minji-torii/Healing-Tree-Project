@@ -21,7 +21,7 @@ Tree.Debug.GridFloor = class{
 		var fShader = '#version 300 es\n' +
 			'precision mediump float;' +
 			'out vec4 finalColor;' +
-			'void main(void){ finalColor = vec4( 0.1, 0.4, 0.6 ,1.0); }';
+			'void main(void){ finalColor = vec4( 0.1, 0.4, 0.5 ,1.0); }';
 
 			Tree.Shaders.New("TreeGridFloor",vShader,fShader)
 			.prepareUniforms(Tree.UNI_MODEL_MAT_NAME,"mat4")
@@ -35,8 +35,8 @@ Tree.Debug.GridFloor = class{
 	static buildMesh(){
 		//Dynamiclly create a grid
 		var verts = [],
-			size = 30,			// W/H of the outer box of the grid, from origin we can only go 1 unit in each direction, so from left to right is 2 units max
-			div = 1000.0,			// How to divide up the grid
+			size = 90,			// W/H of the outer box of the grid, from origin we can only go 1 unit in each direction, so from left to right is 2 units max
+			div = 1200.0,			// How to divide up the grid
 			step = size / div,	// Steps between each line, just a number we increment by for each line in the grid.
 			half = size / 2;	// From origin the starting position is half the size.
 
@@ -136,31 +136,4 @@ Tree.Debug.Lines = class{
 		return this;
 	}
 
-	reset(){
-		this._verts.length = 0;
-		this._colorArray.length = 0;
-		this._colorList.length = 0;
-		this.vao.count = 0;
-		this._isModified = true;
-		return this;
-	}
-
-	addVector(v1,v2,color){
-		var idx = this.addColor(color);
-		this._verts.push(v1[0],v1[1],v1[2],idx, v2[0],v2[1],v2[2],idx);
-		this._isModified = true;
-		return this;
-	}
-
-	addColor(c){
-		if(c[0] == "#") c = c.substring(1);
-		c = c.toLowerCase();
-
-		var idx = this._colorList.indexOf(c);
-		if(idx != -1) return idx;
-
-		this._colorArray.push( parseInt(c[0]+c[1],16) / 255.0, parseInt(c[2]+c[3],16) / 255.0, parseInt(c[4]+c[5],16) / 255.0 );
-		this._colorList.push(c);
-		return this._colorList.length - 1;
-	}
 };
